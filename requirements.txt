@@ -1,0 +1,7 @@
+mne>=1.6
+numpy>=1.26
+scipy>=1.11
+pandas>=2.0
+matplotlib>=3.8
+nilearn>=0.10        # only needed for HEAD_MODEL = "offline"
+jupyter
