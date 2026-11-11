@@ -35,6 +35,7 @@ at all.**
 | `figures/` | Figures from the reference run |
 | `results/` | Per-recording result tables (CSV) from the reference run |
 | `LICENSE` | MIT |
+| `real_data/` | Application to three open Parkinson's disease EEG cohorts, with all sensitivity analyses (see below) |
 
 ## Quick start
 
@@ -203,6 +204,56 @@ Wilcoxon signed-rank tests, n = 15.
   only part of a cohort is localized well.
 
 ![OFF vs ON with the same true source](figures/fig6_group_offon.png)
+
+## Real-data analysis (`real_data/`)
+
+The `real_data/` folder applies the validated pipeline to three open resting-state EEG cohorts from OpenNeuro.
+It holds every analysis reported in the paper *Simulation-based validation of scalp EEG beta-burst imaging in Parkinson's disease*.
+
+### Data
+
+Download the three datasets from OpenNeuro (BIDS format):
+
+| Cohort | OpenNeuro | Version | Design |
+|---|---|---|---|
+| San Diego | [ds002778](https://openneuro.org/datasets/ds002778) | 1.0.5 | 15 PD (OFF/ON) + 16 HC, 32-ch BioSemi |
+| New Mexico | [ds003490](https://openneuro.org/datasets/ds003490) | 1.1.0 | 25 PD (OFF/ON) + 25 HC, 64-ch BrainVision |
+| Iowa | [ds004584](https://openneuro.org/datasets/ds004584) | 1.0.0 | 100 PD (ON) + 49 HC, 64-ch BrainVision |
+
+Then set the three `"root"` paths in the `DATASETS` dictionary in the settings cell of `pd_beta_three_datasets.ipynb` to where you saved them.
+
+### Notebooks and run order
+
+Run the notebooks from inside `real_data/`, in this order. All outputs are written to `real_data/pd_beta_three/`. Every expensive step is cached, so a run that stops can simply be restarted.
+
+| # | Notebook | What it does | Paper | Runtime* |
+|---|---|---|---|---|
+| 1 | `pd_beta_three_datasets.ipynb` | Preprocessing (filtering, bad channels, ICA/ICLabel), GED detector with quality gate, common aperiodic-normalized threshold, burst metrics, dSPM/eLORETA/LCMV maps, surrogate tests, split-half reliability, SNR calibration, group statistics and meta-analysis, figures | Sections 2.6–2.9, 3.2–3.6; Tables 2, 10–12; Figs 8–14 | 3–4 h |
+| 2 | `iowa_confound_check.ipynb` | Iowa covariate models M0–M3 (ICA cleaning, aperiodic slope, recording length) | Table 13 | < 1 min |
+| 3 | `revision_analyses.ipynb` | Sensitivity analyses: software versions and source-space overlap; simulation with the real-data detector; region-specific SNR calibration; model sensitivity (patch size, frequency, two generators, STN, EMG); quality-gate sensitivity; amplitude decomposition; extended split-half reliability; 200/100 surrogates; random-effects table, bootstrap CIs, minimum detectable effects, TOST | Sections 2.10, 3.1.7–3.1.8; Tables 8, S1–S6 | 4–5 h |
+| 4 | `harmonic_check.ipynb` | Why the real-data detector fails at high SNR: the second harmonic of non-sinusoidal bursts biases the gate's aperiodic fit | Table 9 | ~20 min |
+| 5 | `waveform_check.ipynb` | Burst amplitude under four aperiodic models (incl. FOOOF), gate re-run with a harmonic-safe fit, waveform shape (sharpness, rise–decay asymmetry, harmonic excess) | Section 3.5.4; Table 14 | ~10 min |
+
+\*On a desktop PC (Intel i7, 64 GB RAM). Most of the time in notebook 3 goes to the map surrogates. Set `N_SURR_MAPS = 0` to skip them.
+
+Notebooks 3–5 do not repeat the main analysis. They import the functions of the notebook before them and read its cached outputs. Notebook 1 loads the simulation framework from `../beta_burst_sim.ipynb`.
+
+### Outputs
+
+```
+real_data/pd_beta_three/
+    preprocessed/   cleaned recordings + preprocessing_qc.csv   (not in the repository; regenerate with notebook 1)
+    cache/          head models and calibration simulations     (not in the repository)
+    results/        per-recording tables, statistics, meta-analysis     → copied to real_data/results/
+    revision/       R0–R7, H1 and W1 tables of the sensitivity analyses → copied to real_data/results/revision/
+    figures/        all real-data figures                               → copied to real_data/figures/
+```
+
+The CSV files in `real_data/results/` and the figures in `real_data/figures/` are the exact outputs behind the numbers in the paper.
+
+### Additional requirements
+
+The real-data notebooks need `mne-icalabel`, `onnxruntime` and `python-picard` (preprocessing), and `fooof` (notebook 5). All are listed in `requirements.txt`.
 
 ## Practical recommendations for real data
 
