@@ -5,3 +5,7 @@ pandas>=2.0
 matplotlib>=3.8
 nilearn>=0.10        # only needed for HEAD_MODEL = "offline"
 jupyter
+mne-icalabel>=0.10   
+onnxruntime           
+python-picard>=0.8    
+fooof>=1.1            # waveform_check.ipynb (aperiodic model V3)
